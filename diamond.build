@@ -1,0 +1,33 @@
+[vars]
+OUT="obsidean.iso"
+
+[pre]
+cmd="rm -rf .build/tmp/* || true; rm -rf build/* || true" 
+
+[[step]]
+name="step1" 
+cmd="""\
+    nasm -felf64 src/asm/bootup.asm -o .build/tmp/boot.o; \
+    nasm -felf64 src/asm/bootup64.asm -o .build/tmp/boot64.o; \ 
+    nasm -felf64 src/asm/header.asm -o .build/tmp/header.o; \
+"""
+
+[[step]]
+name="step2"
+cmd="""\
+    gcc -m64 -fno-stack-protector -c src/kernel.cc -o .build/tmp/kernel.o; \
+    gcc -m64 -fno-stack-protector -c src/io/stdio.cc -o .build/tmp/io.o; \
+    gcc -m64 -fno-stack-protector -c src/io/keyboard.cc -o .build/tmp/keyboard.o; \
+    gcc -m64 -fno-stack-protector -c src/io/common.cc -o .build/tmp/common.o; \
+"""
+
+[[step]]
+name="step3"
+cmd="ld -T linker.ld -n -melf_x86_64 .build/tmp/*.o -o .build/prod/boot/kernel.img"
+
+[[step]]
+name="step4"
+cmd="grub-mkrescue -o build/{OUT} .build/prod"
+
+[clean]
+cmd="rm -rf .build.tmp/*.o"
